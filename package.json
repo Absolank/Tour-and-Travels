@@ -18,6 +18,7 @@
   "homepage": "https://github.com/Absolank/Tour-and-Travels#readme",
   "dependencies": {
     "express": "^4.16.4",
+    "express-session": "^1.16.1",
     "morgan": "^1.9.1",
     "mysql": "^2.16.0"
   }
