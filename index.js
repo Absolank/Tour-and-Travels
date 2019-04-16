@@ -8,9 +8,14 @@ const db_ops = require('./routes/db_ops');
 const router = express.Router();
 app.use(express.static('./public'));
 app.use(morgan('short'));
+app.use(bodyParser.urlencoded({extended: false}));
 
+
+router.get('/delete/location/:lname', db_ops.deleteLocation);
 router.post('/add/location', db_ops.addlocation);
-router.get('/search/location/:lname', db_ops.getLocation);
+router.post('/add/user', db_ops.addUser);
+router.get('/search/location', db_ops.getLocation);
+router.get('/search/users', db_ops.searchUser);
 
 app.use('/api', router);
 

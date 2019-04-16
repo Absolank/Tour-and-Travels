@@ -14,6 +14,7 @@ const connection = mysql.createConnection(
         database: database_name
     }
 );
+
 connection.connect((err) => {
     if(err) {
         console.log('ERROR::Unable to connect to mysql database ' + database_name + '!!!');
@@ -22,61 +23,40 @@ connection.connect((err) => {
     console.log('Connection Successfull!!');
 });
 
+
 exports.addlocation = function(req, res){
-    if(!req.body)
-        return res.send({"status" : "error"});
-    if(!req.body.name || !req.body.image_location) {
-        return res.send({"status": "error", "message": "missing a parameter"});
-    }
         var location = [
             0,
-            req.body.name
+            req.body.name,
+            req.body.location_name
         ];
-        var image = [
-            0,
-            0,
-            req.body.image_location
-        ];
-        var id;
         connection.query('select max(ID) as max from Location', (err, results, fields)=>{
-            if(err) throw err;
-            if(results[0].max == '')
-                lid = 1;
+            if(err || results.length == 0) throw err;
+            if(results[0].max == null){
+                location[0] = 0;
+            }
             else
-                lid = results[0].max + 1;
-        });
+                location[0] = results[0].max + 1;
 
-        connection.query('select max(ID) as max from Images', (err, results, fields)=>{
-            if(err) throw err;
-            if(results[0].max == '')
-                iid = 1;
-            else
-                iid = results[0].max + 1;
-        });
 
-        location[0] = lid;
-        image[0] = iid;
-        image[1] = lid;
-
-        connection.query('insert into Location values ?', location, (err, results, fields) => {
-            if (err) {
-                console.log("error ocurred",error);
-                res.send({
-                  "code":400,
-                  "failed":"error ocurred"
-                });
-              }else{
-                console.log('The solution is: ', results);
-
-              }
+            connection.query('insert into Location values (?, ?, ?)', location, (err, results, fields) => {
+                if (err) {
+                    console.log("error ocurred",err);
+                    res.send({
+                      "code":400,
+                      "failed":"error ocurred"
+                    });
+                  }else{
+                      res.send({'code' : 200, 'message' : 'location successfully added'});
+                  }
+            });
         });
 };
 exports.getLocation = function(req, res){
-    var location = req.params.lname;
-    console.log(location);
-    connection.query('select * from Location inner join Images on Location.ID = Images.LocationID where Location.Name = ?', location, (err, results, fields) => {
+    const location = req.query.name;
+    connection.query('select * from Location where Name = ?', location, (err, results, fields) => {
         if (err) {
-            console.log("error ocurred",error);
+            console.log("error ocurred",err);
             res.send({
               "code":400,
               "failed":"error ocurred"
@@ -87,4 +67,104 @@ exports.getLocation = function(req, res){
           }
     });
 };
+exports.deleteLocation = function(req, res){
+    const location = req.params.lname;
+    console.log(location);
+    connection.query('delete from Location where Name = ?', location, (err, results, fields) => {
+        if (err) {
+            console.log("error ocurred",err);
+            res.send({
+              "code":400,
+              "failed":"error ocurred"
+            });
+          }else{
+            res.json(results);
+          }
+    });
 
+};
+
+exports.addUser = function(req, res){
+    const username = req.body.username;
+    const firstname = req.body.firstname;
+    const lastname = req.body.lastname;
+    const email = req.body.email;
+    const password = req.body.password;
+
+
+    console.log(username + " " + firstname + " " + lastname + " " + email + " " + password);
+    if(username == null || firstname == null || lastname == null || email == null || password == null)
+    {
+        res.send({
+            'error' : '400',
+            'message' : 'empty fields'
+        });
+        return;
+    }
+    const queryUrl = 'insert into Users (Username, FirstName, LastName, Email, Password) values (?, ?, ?, ?, PASSWORD(?))';
+
+    connection.query(queryUrl, [username, firstname, lastname, email, password], (err, results, fields) => {
+        if (err) {
+            console.log("error ocurred",err.code);
+            res.send({'err':[err.errno, err.code]});
+          }else{
+            res.json(results);
+          }
+    });
+};
+
+exports.searchUser = function(req, res){
+    var queryUrl = 'select * from Users ';
+    var toAppend = 'where ';
+    const username = req.query.username;
+    const firstname = req.query.firstname;
+    const lastname = req.query.lastname;
+    const email = req.query.email;
+
+    console.log(username + " " + firstname + " " + lastname + " " + email);
+
+    var list = [];
+    if(username != null){
+        toAppend += "Username = ? ";
+        list.push(username);
+    }
+    if(firstname != null){
+        if(list.length > 0)
+            toAppend += " and ";
+
+        toAppend += "FirstName = ?";
+        list.push(firstname);
+    }
+    if(lastname != null){
+        if(list.length > 0)
+            toAppend += " and ";
+        toAppend += "and LastName = ?";
+        list.push(lastname);
+    }
+
+    if(email != null){
+        if(list.length > 0)
+            toAppend += "Email = ?";
+        toAppend += "and Email = ?";
+        list.push(email);
+    }
+    console.log(list);
+    console.log(toAppend);
+    if(list.length > 0)
+        queryUrl += toAppend;
+    console.log(queryUrl);
+
+    
+    
+    connection.query(queryUrl, list, (err, results, fields) => {
+        if (err) {
+            console.log("error ocurred",err);
+            res.send({
+              "code":400,
+              "failed":"error ocurred"
+            });
+          }else{
+            res.json(results);
+          }
+    });
+};
