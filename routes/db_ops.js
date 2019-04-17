@@ -1,58 +1,23 @@
-const mysql = require('mysql');
+const connection = require('./connection.js');
+const jwt = require('jsonwebtoken');
+const auth = require('./authentication/auth');
 
-
-const hostname = "localhost";
-const username = "root";
-const passwd = "password";
-const database_name = "TourAndTravels";
-
-const connection = mysql.createConnection(
-    {
-        host: hostname,
-        user: username,
-        password: passwd,
-        database: database_name
-    }
-);
-
-connection.connect((err) => {
-    if(err) {
-        console.log('ERROR::Unable to connect to mysql database ' + database_name + '!!!');
-        throw err;
-    }
-    console.log('Connection Successfull!!');
-});
-
-
-exports.addlocation = function(req, res){
-        var location = [
-            0,
-            req.body.name,
-            req.body.location_name
-        ];
-        connection.query('select max(ID) as max from Location', (err, results, fields)=>{
-            if(err || results.length == 0) throw err;
-            if(results[0].max == null){
-                location[0] = 0;
-            }
-            else
-                location[0] = results[0].max + 1;
-
-
-            connection.query('insert into Location values (?, ?, ?)', location, (err, results, fields) => {
-                if (err) {
-                    console.log("error ocurred",err);
-                    res.send({
-                      "code":400,
-                      "failed":"error ocurred"
-                    });
-                  }else{
-                      res.send({'code' : 200, 'message' : 'location successfully added'});
-                  }
-            });
+exports.addlocation = (req, res)=>{
+    var location = req.body.name;
+        connection.query('insert into Location (Name) values (?)', location, (err, results, fields) => {
+            if (err) {
+                console.log("error ocurred",err);
+                res.send({
+                  "code":400,
+                  "failed":"error ocurred"
+                });
+              }else{
+                  res.send({'code' : 200, 'message' : 'location successfully added'});
+              }
         });
 };
-exports.getLocation = function(req, res){
+
+exports.getLocation = (req, res)=>{
     const location = req.query.name;
     connection.query('select * from Location where Name = ?', location, (err, results, fields) => {
         if (err) {
@@ -67,7 +32,8 @@ exports.getLocation = function(req, res){
           }
     });
 };
-exports.deleteLocation = function(req, res){
+
+exports.deleteLocation = (req, res)=>{
     const location = req.params.lname;
     console.log(location);
     connection.query('delete from Location where Name = ?', location, (err, results, fields) => {
@@ -84,7 +50,7 @@ exports.deleteLocation = function(req, res){
 
 };
 
-exports.addUser = function(req, res){
+exports.addUser = (req, res)=>{
     const username = req.body.username;
     const firstname = req.body.firstname;
     const lastname = req.body.lastname;
@@ -113,58 +79,179 @@ exports.addUser = function(req, res){
     });
 };
 
-exports.searchUser = function(req, res){
-    var queryUrl = 'select * from Users ';
-    var toAppend = 'where ';
-    const username = req.query.username;
-    const firstname = req.query.firstname;
-    const lastname = req.query.lastname;
-    const email = req.query.email;
+exports.searchUser = (req, res)=>{
+    console.log();
+    var authentication = auth.verify(req, res);
+    console.log(authentication);
+    if(authentication != null)
+    {
+        var queryUrl = 'select ID, Username, Email, FirstName, LastName from Users ';
+        var toAppend = 'where ';
+        const username = req.query.username;
+        const firstname = req.query.firstname;
+        const lastname = req.query.lastname;
+        const email = req.query.email;
 
-    console.log(username + " " + firstname + " " + lastname + " " + email);
+        console.log(username + " " + firstname + " " + lastname + " " + email);
 
-    var list = [];
-    if(username != null){
-        toAppend += "Username = ? ";
-        list.push(username);
-    }
-    if(firstname != null){
+        var list = [];
+        if(username != null){
+            toAppend += "Username = ? ";
+            list.push(username);
+        }
+        if(firstname != null){
+            if(list.length > 0)
+                toAppend += " and ";
+
+            toAppend += "FirstName = ?";
+            list.push(firstname);
+        }
+        if(lastname != null){
+            if(list.length > 0)
+                toAppend += " and ";
+            toAppend += "and LastName = ?";
+            list.push(lastname);
+        }
+
+        if(email != null){
+            if(list.length > 0)
+                toAppend += "Email = ?";
+            toAppend += "and Email = ?";
+            list.push(email);
+        }
+        console.log(list);
+        console.log(toAppend);
         if(list.length > 0)
-            toAppend += " and ";
+            queryUrl += toAppend;
+        console.log(queryUrl);
 
-        toAppend += "FirstName = ?";
-        list.push(firstname);
-    }
-    if(lastname != null){
-        if(list.length > 0)
-            toAppend += " and ";
-        toAppend += "and LastName = ?";
-        list.push(lastname);
-    }
 
-    if(email != null){
-        if(list.length > 0)
-            toAppend += "Email = ?";
-        toAppend += "and Email = ?";
-        list.push(email);
-    }
-    console.log(list);
-    console.log(toAppend);
-    if(list.length > 0)
-        queryUrl += toAppend;
-    console.log(queryUrl);
 
-    
-    
-    connection.query(queryUrl, list, (err, results, fields) => {
-        if (err) {
-            console.log("error ocurred",err);
-            res.send({
-              "code":400,
-              "failed":"error ocurred"
+        connection.query(queryUrl, list, (err, results, fields) => {
+            if (err) {
+                console.log("error ocurred",err);
+                res.send({
+                  "code":400,
+                  "failed":"error ocurred"
+                });
+              }else{
+                res.json(results);
+              }
+        });
+        return;
+    }
+    res.json({err: 403, message: 'cannot authenticate'});
+};
+
+exports.addFlight = (req, res) => {
+    const source = req.body.source;
+    const destination = req.body.destination;
+    const cost = req.body.cost;
+
+
+    var sourceID, destinationID;
+
+    connection.query('select * from Location where Name = ?', [source], (err, records, fields)=>{
+        sourceID = records[0].ID;
+        connection.query('select * from Location where Name = ?', [destination], (err, records, fields)=>{
+            destinationID = records[0].ID;
+            
+            var query = 'insert into Tour (SourceID, DestinationID) values (?, ?)';
+            connection.query(query, [sourceID, destinationID], (err, records, fields)=>{
+        
+                var querySelectTour = 'select * from Tour where SourceID = ? and DestinationID = ?';
+                console.log(sourceID + " " + destinationID);
+                connection.query(querySelectTour, [sourceID, destinationID], (err, records, fields) => {
+
+                    const queryInsertFlight = 'insert into Flight (TourID, Cost) values (?, ?) ';
+                    connection.query(queryInsertFlight, [records[0].ID, cost], (err, results, fields) => {
+                        res.json({
+                            err,
+                            results
+                        });
+                    });
+                });
             });
-          }else{
-            res.json(results);
-          }
+        });
+    });
+};
+
+exports.addTrain = (req, res) => {
+    const source = req.body.source;
+    const destination = req.body.destination;
+    const cost = req.body.cost;
+
+
+    var sourceID, destinationID;
+
+    connection.query('select * from Location where Name = ?', [source], (err, records, fields)=>{
+        sourceID = records[0].ID;
+        connection.query('select * from Location where Name = ?', [destination], (err, records, fields)=>{
+            destinationID = records[0].ID;
+            
+            var query = 'insert into Tour (SourceID, DestinationID) values (?, ?)';
+            connection.query(query, [sourceID, destinationID], (err, records, fields)=>{
+        
+                var querySelectTour = 'select * from Tour where SourceID = ? and DestinationID = ?';
+                console.log(sourceID + " " + destinationID);
+                connection.query(querySelectTour, [sourceID, destinationID], (err, records, fields) => {
+
+                    const queryInsertFlight = 'insert into Train (TourID, Cost) values (?, ?) ';
+                    connection.query(queryInsertTrain, [records[0].ID, cost], (err, results, fields) => {
+                        res.json({
+                            err,
+                            results
+                        });
+                    });
+                });
+            });
+        });
+    });
+};
+
+exports.addBus = (req, res) => {
+    const source = req.body.source;
+    const destination = req.body.destination;
+    const cost = req.body.cost;
+
+
+    var sourceID, destinationID;
+
+    connection.query('select * from Location where Name = ?', [source], (err, records, fields)=>{
+        sourceID = records[0].ID;
+        connection.query('select * from Location where Name = ?', [destination], (err, records, fields)=>{
+            destinationID = records[0].ID;
+            
+            var query = 'insert into Tour (SourceID, DestinationID) values (?, ?)';
+            connection.query(query, [sourceID, destinationID], (err, records, fields)=>{
+        
+                var querySelectTour = 'select * from Tour where SourceID = ? and DestinationID = ?';
+                console.log(sourceID + " " + destinationID);
+                connection.query(querySelectTour, [sourceID, destinationID], (err, records, fields) => {
+
+                    const queryInsertBus = 'insert into Bus (TourID, Cost) values (?, ?) ';
+                    connection.query(queryInsertBus, [records[0].ID, cost], (err, results, fields) => {
+                        res.json({
+                            err,
+                            results
+                        });
+                    });
+                });
+            });
+        });
+    });
+};
+
+exports.addHotel = (req, res) => {
+    const hotelName = req.body.name;
+    const locationName = req.body.location;
+    const perPersonCost = req.body.cost;
+    const query = 'select * from Location where Name = ?';
+    connection.query(query, [locationName], (err, records, fields)=>{
+        const id = records[0].ID;
+        const insertHotel = 'insert into Hotel (Name, LocationID, PerPersonCost) values (?, ?, ?)';
+        connection.query(insertHotel, [hotelName, id, perPersonCost], (err, records, fields)=>{
+            res.json({err, records, fields});
+        });
     });
 };
