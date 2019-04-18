@@ -28,6 +28,8 @@
                 <input placeholder="Source" name="source">
                 <input placeholder="Destination" name="destination">
                 <input placeholder="Cost" name="cost" type="number">
+                <input placeholder="StartTime" name ="StartTime", type="time">
+                <input placeholder="TravelTime" name="travelTime" type="time">
                 <button>Submit</button>
         </div>
         <div>
@@ -37,6 +39,8 @@
                 <input placeholder="Source" name="source">
                 <input placeholder="Destination" name="destination">
                 <input placeholder="Cost" name="cost" type="number">
+                <input placeholder="StartTime" name ="StartTime", type="time">
+                <input placeholder="TravelTime" name="travelTime" type="time">
                 <button>Submit</button>
         </div>
         <div>
@@ -46,6 +50,8 @@
                 <input placeholder="Source" name="source">
                 <input placeholder="Destination" name="destination">
                 <input placeholder="Cost" name="cost" type="number">
+                <input placeholder="StartTime" name ="StartTime", type="time">
+                <input placeholder="TravelTime" name="travelTime" type="time">
                 <button>Submit</button>
         </div>
         <div>
@@ -64,11 +70,12 @@
             Add Package
             <hr/>
             <form action='/api/add/package' method="POST">
-                <input placeholder="Username" name='username'>
-                <input placeholder="First Name" name='firstname'>
-                <input placeholder="Last Name" name='lastname'>
-                <input placeholder="E-Mail" name='email' type="email">
-                <input placeholder="Password" name='password' type="password">
+                <input placeholder="TourID" name='tourId' type="number">
+                <input placeholder="HoteID" name='hotelId' type="number">
+                <input placeholder="NumDays" name='numDays' type="number">
+                <input placeholder="NumNights" name='numNights' type="number">
+                <input placeholder="OtherCost" name='otherCost' type="number">
+                <input placeholder="Discount" name='discount' type="number">
                 <button>Submit</button>
             </form>
 	    </div>
