@@ -42,6 +42,8 @@ create table Flight(
     ID integer primary key auto_increment,
     TourID integer not null,
     Cost integer not null,
+    StartTime time not null, 
+    TravelTime time not null,
     FOREIGN KEY (TourID) REFERENCES Tour(ID)
     
 );
@@ -50,6 +52,8 @@ create table Train(
     ID integer primary key auto_increment,
     TourID integer not null,
     Cost integer not null,
+    StartTime time not null, 
+    TravelTime time not null,
     FOREIGN KEY (TourID) REFERENCES Tour(ID)
 
 );
@@ -58,25 +62,30 @@ create table Bus(
     ID integer primary key auto_increment,
     TourID integer not null,
     Cost integer not null,
+    StartTime time not null, 
+    TravelTime time not null,
     FOREIGN KEY (TourID) REFERENCES Tour(ID)
 );
 
+-- We'll take the below info as input from the user when he books the package
 create table TravelInfo(
     ID integer primary key auto_increment,
     TravellingMedium integer not null,
-    TravelingMediumID integer not null
+    TravelingMediumID integer not null,
+    BookingType integer not null 
+    --  1 for travel Package, 2 for bus, 3 for train
 );
 
 create table TravelPackage(
     ID integer primary key auto_increment,
-    TravelInfoID integer not null,
+    TravelInfoID integer,
+    -- Data Redundancy toh nahi ho rahi tourID add karke?, flight/bus/traain mei bhi hogi yeh info
+    TourID integer not null,  
     HotelID integer,
     NumDays integer not null,
     NumNights integer not null,
-    NumPersons integer not null,
-    DateFrom date not null,
-    DateTo date not null,
-    Cost integer not null,
+    TravelCost integer not null,
+    OtherCost integer not null,
     Discount integer not null,
     FOREIGN KEY (TravelInfoID) REFERENCES TravelInfo(ID),
     FOREIGN KEY (HotelID) REFERENCES Hotel(ID)
@@ -85,15 +94,13 @@ create table TravelPackage(
 create table BookingInfo(
     ID integer primary key,
     TravelInfoID integer,
+    NumPersons integer not null,
+    DateFrom date not null,
+    DateTo date not null,
     FOREIGN KEY (TravelInfoID) REFERENCES TravelInfo(ID),
     FOREIGN KEY (HotelID) REFERENCES Hotel(ID)
 );
 
-create table BookingInfo(
-    ID integer primary key,
-    TravelDetailsID integer not null,
-    TravelType integer not null
-);
 
 create table Invoice(
     ID integer primary key auto_increment,
