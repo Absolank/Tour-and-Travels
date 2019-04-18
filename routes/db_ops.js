@@ -147,7 +147,9 @@ exports.addFlight = (req, res) => {
     const source = req.body.source;
     const destination = req.body.destination;
     const cost = req.body.cost;
-
+    const startDate = req.body.date;
+    const startTime = req.body.startTime;
+    const travelTime = req.body.travelTime;
 
     var sourceID, destinationID;
 
@@ -163,8 +165,8 @@ exports.addFlight = (req, res) => {
                 console.log(sourceID + " " + destinationID);
                 connection.query(querySelectTour, [sourceID, destinationID], (err, records, fields) => {
 
-                    const queryInsertFlight = 'insert into Flight (TourID, Cost) values (?, ?) ';
-                    connection.query(queryInsertFlight, [records[0].ID, cost], (err, results, fields) => {
+                    const queryInsertFlight = 'insert into Flight (TourID, Cost, StartDate, StartTime, TravelTime) values (?, ?, ?, ?, ?) ';
+                    connection.query(queryInsertFlight, [records[0].ID, cost, startDate, startTime, travelTime], (err, results, fields) => {
                         res.json({
                             err,
                             results
@@ -180,6 +182,9 @@ exports.addTrain = (req, res) => {
     const source = req.body.source;
     const destination = req.body.destination;
     const cost = req.body.cost;
+    const startDate = req.body.date;
+    const startTime = req.body.startTime;
+    const travelTime = req.body.travelTime;
 
 
     var sourceID, destinationID;
@@ -196,8 +201,8 @@ exports.addTrain = (req, res) => {
                 console.log(sourceID + " " + destinationID);
                 connection.query(querySelectTour, [sourceID, destinationID], (err, records, fields) => {
 
-                    const queryInsertFlight = 'insert into Train (TourID, Cost) values (?, ?) ';
-                    connection.query(queryInsertTrain, [records[0].ID, cost], (err, results, fields) => {
+                    const queryInsertFlight = 'insert into Train (TourID, Cost, StartDate, StartTime, TravelTime) values (?, ?, ?, ?, ?) ';
+                    connection.query(queryInsertTrain, [records[0].ID, cost, startDate, startTime, travelTime], (err, results, fields) => {
                         res.json({
                             err,
                             results
@@ -213,7 +218,9 @@ exports.addBus = (req, res) => {
     const source = req.body.source;
     const destination = req.body.destination;
     const cost = req.body.cost;
-
+    const startDate = req.body.date;
+    const startTime = req.body.startTime;
+    const travelTime = req.body.travelTime;
 
     var sourceID, destinationID;
 
@@ -229,8 +236,8 @@ exports.addBus = (req, res) => {
                 console.log(sourceID + " " + destinationID);
                 connection.query(querySelectTour, [sourceID, destinationID], (err, records, fields) => {
 
-                    const queryInsertBus = 'insert into Bus (TourID, Cost) values (?, ?) ';
-                    connection.query(queryInsertBus, [records[0].ID, cost], (err, results, fields) => {
+                    const queryInsertBus = 'insert into Bus (TourID, Cost, StartTime, StartDate, TravelTime) values (?, ?, ?, ?, ?) ';
+                    connection.query(queryInsertBus, [records[0].ID, cost, startTime, startDate, travelTime], (err, results, fields) => {
                         res.json({
                             err,
                             results
@@ -255,3 +262,19 @@ exports.addHotel = (req, res) => {
         });
     });
 };
+
+exports.addPackage = (req, res) =>{
+    const tourId = req.body.tourId;
+    const numDays = req.body.numDays;
+    const numNights = req.body.numNights;
+    const hotelId = req.body.hotelId;
+    const otherCost = req.body.otherCost;
+    const discount = req.body.discount;
+    const query = 'insert into TravelPackage(tourId, numDays, numNights, hotelId, otherCost, discount) values (?, ?, ?, ?, ?, ?)';
+    connection.query(query, [tourId, numDays, numNights, hotelId, otherCost, discount], (err, results, fields)=>{
+        res.json({
+            err, 
+            results
+        });
+    });
+}
