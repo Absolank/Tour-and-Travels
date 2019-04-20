@@ -1,8 +1,8 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
-const connection = require('../connection.js');
+const connection = require('../connection');
 const key = 'this_is_the_secret_key';
-const tokenDuration = '600s';
+const tokenDuration = '6000s';
 // const app = express();
 
 
@@ -35,16 +35,22 @@ exports.verifyToken = (req, res, next) => {
     }
 };
 
-exports.verify = (req, res) => {
-    var resp;
+
+exports.verify = (req, res)=>{
+    var resp = null;
     jwt.verify(req.token, key, (err, authdata)=>{
-        console.log(err);
         if(!err){
             resp = authdata;
+        }
+        else{
+            console.log('Cannot Authenticate');
         }
     });
     return resp;
 };
+
+
+
 
 exports.checkPassword = (req, res) => {
     const username = req.body.username;
@@ -71,11 +77,15 @@ exports.checkPassword = (req, res) => {
 };
 
 exports.login =  (req, res) =>{
+    console.log(req.params);
+    console.log(req.body);
     const username = req.body.username;
     const password = req.body.password;
+    console.log(username + " " + password);
     const query = 'select * from Users where Username = ? and Password = PASSWORD(?)';
 
     connection.query(query, [username, password], (err, records, fields)=>{
+        console.log(records[0]);
         if(err || records.length == 0 || records[0].Username === undefined){
             res.json({
                 error : err,
@@ -83,16 +93,26 @@ exports.login =  (req, res) =>{
             });
             return;
         }
+        const ID = records[0].ID;
+        const Username = records[0].Username;
+        const FirstName = records[0].FirstName;
+        const LastName = records[0].LastName;
+        const Email = records[0].Email;
         const user = {
-            userid: records[0].ID,
-            username: records[0].Username,
-            firstname: records[0].FirstName,
-            lastname: records[0].LastName,
-            email: records[0].Email
+            ID,
+            Username,
+            FirstName,
+            LastName,
+            Email
         };
-        jwt.sign({user: user}, key, { expiresIn: tokenDuration}, (err, token)=>{
+        jwt.sign({user: user}, key, { expiresIn: tokenDuration}, (err, Token)=>{
             res.json({
-                token
+                ID,
+                Username,
+                FirstName,
+                LastName,
+                Email,
+                Token
             });
         });    
     });

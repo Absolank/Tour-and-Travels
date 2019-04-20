@@ -1,56 +1,142 @@
 const connection = require('./connection.js');
-const jwt = require('jsonwebtoken');
 const auth = require('./authentication/auth');
-
-exports.addlocation = (req, res)=>{
+const jwt = require('jsonwebtoken');
+exports.addlocation = (req, res) => {
     var location = req.body.name;
-        connection.query('insert into Location (Name) values (?)', location, (err, results, fields) => {
-            if (err) {
-                console.log("error ocurred",err);
-                res.send({
-                  "code":400,
-                  "failed":"error ocurred"
-                });
-              }else{
-                  res.send({'code' : 200, 'message' : 'location successfully added'});
-              }
-        });
-};
-
-exports.getLocation = (req, res)=>{
-    const location = req.query.name;
-    connection.query('select * from Location where Name = ?', location, (err, results, fields) => {
+    connection.query('insert into Location (Name) values (?)', location, (err, results, fields) => {
         if (err) {
-            console.log("error ocurred",err);
+            console.log("error ocurred", err);
             res.send({
-              "code":400,
-              "failed":"error ocurred"
+                "code": 400,
+                "failed": "error ocurred"
             });
-          }else{
-            console.log('The solution is: ', results);
-            res.json(results);
-          }
+        } else {
+            res.send({
+                'code': 200,
+                'message': 'location successfully added'
+            });
+        }
     });
 };
 
-exports.deleteLocation = (req, res)=>{
+exports.getLocation = (req, res) => {
+    const location = req.query.name;
+    connection.query('select * from Location where Name = ?', location, (err, results, fields) => {
+        if (err) {
+            console.log("error ocurred", err);
+            res.send({
+                "code": 400,
+                "failed": "error ocurred"
+            });
+        } else {
+            console.log('The solution is: ', results);
+            res.json(results);
+        }
+    });
+};
+
+exports.deleteLocation = (req, res) => {
     const location = req.params.lname;
     console.log(location);
     connection.query('delete from Location where Name = ?', location, (err, results, fields) => {
         if (err) {
-            console.log("error ocurred",err);
+            console.log("error ocurred", err);
             res.send({
-              "code":400,
-              "failed":"error ocurred"
+                "code": 400,
+                "failed": "error ocurred"
             });
-          }else{
+        } else {
             res.json(results);
-          }
+        }
     });
 
 };
 
-exports.addUser = (req, res)=>{
+
+exports.addCountry = (req, res) => {
+    const countryName = req.body.country_name;
+    const insertCountry = 'insert into Country (Name) values (?)';
+    connection.query(insertCountry, [countryName], (err, records, fields) => {
+        if (err) {
+            res.json({
+                code: 400,
+                message: 'could not insert country'
+            });
+        } else {
+            res.json(records);
+        }
+    });
+};
+exports.addCity = (req, res) => {
+    const countryId = req.body.country_id;
+    const name = req.body.city_name;
+    const code = req.body.city_code;
+    const insertCity = 'insert into City (CountryID, Name) values (?, ?)';
+    connection.query(insertCity, [countryId, name], (err, records, fields) => {
+        if (err) {
+            res.json({
+                code: 400,
+                message: 'could not insert country'
+            });
+        } else {
+            res.json(records);
+        }
+    });
+};
+exports.addCityPhoto = (req, res) => {
+    const cityId = req.body.City_id;
+    const url = req.body.place_url;
+    const insertCityPhoto = 'insert into CityImage (CityID, Url) values (?, ?)';
+    connection.query(insertCityPhoto, [cityId, url], (err, results, fields)=>{
+        if(err){
+            res.json({
+                code: 400,
+                message: 'could not add city image'
+            });
+        }
+        res.json({
+            code: 200,
+            message: 'successfully added city photo'
+        });
+    });
+};
+exports.addPlace = (req, res) => {
+    const cityId = req.body.city_id;
+    const name = req.body.city_name;
+    const insertCity = 'insert into Place (CityID, Name) values (?, ?)';
+    connection.query(insertCity, [cityId, name], (err, records, fields) => {
+        if (err) {
+            res.json({
+                code: 400,
+                message: 'could not add place'
+            });
+        } else {
+            res.json({
+                code: 200,
+                message: 'successfully added place'
+            });
+        }
+    });
+};
+exports.addPlacePhoto = (req, res) => {
+    const placeId = req.body.place_id;
+    const url = req.body.place_url;
+    const insertPlacePhoto = 'insert into PlaceImage (PlaceID, Url) values (?, ?)';
+    connection.query(insertPlacePhoto, [placeId, url], (err, results, fields)=>{
+        if(err){
+            res.json({
+                code: 400,
+                message: 'could not add place image'
+            });
+        }
+        res.json({
+            code: 200,
+            message: 'successfully added place photo'
+        });
+    });
+};
+
+exports.addUser = (req, res) => {
     const username = req.body.username;
     const firstname = req.body.firstname;
     const lastname = req.body.lastname;
@@ -59,11 +145,10 @@ exports.addUser = (req, res)=>{
 
 
     console.log(username + " " + firstname + " " + lastname + " " + email + " " + password);
-    if(username == null || firstname == null || lastname == null || email == null || password == null)
-    {
+    if (username == null || firstname == null || lastname == null || email == null || password == null) {
         res.send({
-            'error' : '400',
-            'message' : 'empty fields'
+            'error': '400',
+            'message': 'empty fields'
         });
         return;
     }
@@ -71,20 +156,41 @@ exports.addUser = (req, res)=>{
 
     connection.query(queryUrl, [username, firstname, lastname, email, password], (err, results, fields) => {
         if (err) {
-            console.log("error ocurred",err.code);
-            res.send({'err':[err.errno, err.code]});
-          }else{
+            console.log("error ocurred", err.code);
+            res.send({
+                'err': [err.errno, err.code]
+            });
+        } else {
             res.json(results);
-          }
+        }
     });
 };
 
-exports.searchUser = (req, res)=>{
-    console.log();
+exports.verifyUser = (req, res) => {
     var authentication = auth.verify(req, res);
-    console.log(authentication);
-    if(authentication != null)
-    {
+    if (authentication != null) {
+        if (authentication.user.username == 'admin')
+            res.json({
+                type: 'admin',
+                status: 200
+            });
+        else
+            res.json({
+                type: 'user',
+                status: 200
+            });
+    } else
+        res.json({
+            status: 400
+        });
+
+    console.log(res.body);
+};
+
+exports.searchUser = (req, res) => {
+    var authentication = auth.verify(req, res);
+
+    if (authentication != null) {
         var queryUrl = 'select ID, Username, Email, FirstName, LastName from Users ';
         var toAppend = 'where ';
         const username = req.query.username;
@@ -92,189 +198,180 @@ exports.searchUser = (req, res)=>{
         const lastname = req.query.lastname;
         const email = req.query.email;
 
-        console.log(username + " " + firstname + " " + lastname + " " + email);
-
         var list = [];
-        if(username != null){
+        if (username != null) {
             toAppend += "Username = ? ";
             list.push(username);
         }
-        if(firstname != null){
-            if(list.length > 0)
+        if (firstname != null) {
+            if (list.length > 0)
                 toAppend += " and ";
 
             toAppend += "FirstName = ?";
             list.push(firstname);
         }
-        if(lastname != null){
-            if(list.length > 0)
+        if (lastname != null) {
+            if (list.length > 0)
                 toAppend += " and ";
             toAppend += "and LastName = ?";
             list.push(lastname);
         }
 
-        if(email != null){
-            if(list.length > 0)
+        if (email != null) {
+            if (list.length > 0)
                 toAppend += "Email = ?";
             toAppend += "and Email = ?";
             list.push(email);
         }
-        console.log(list);
-        console.log(toAppend);
-        if(list.length > 0)
+        if (list.length > 0)
             queryUrl += toAppend;
-        console.log(queryUrl);
 
 
 
         connection.query(queryUrl, list, (err, results, fields) => {
             if (err) {
-                console.log("error ocurred",err);
+                console.log("error ocurred", err);
                 res.send({
-                  "code":400,
-                  "failed":"error ocurred"
+                    "code": 400,
+                    "failed": "error ocurred"
                 });
-              }else{
+            } else {
                 res.json(results);
-              }
+            }
         });
         return;
+    } else {
+        res.json({
+            err: 403,
+            message: 'cannot authenticate'
+        });
     }
-    res.json({err: 403, message: 'cannot authenticate'});
 };
 
 exports.addFlight = (req, res) => {
-    const source = req.body.source;
-    const destination = req.body.destination;
+    const tourId = req.body.tourId;
     const cost = req.body.cost;
     const startDate = req.body.date;
     const startTime = req.body.startTime;
     const travelTime = req.body.travelTime;
-
-    var sourceID, destinationID;
-
-    connection.query('select * from Location where Name = ?', [source], (err, records, fields)=>{
-        sourceID = records[0].ID;
-        connection.query('select * from Location where Name = ?', [destination], (err, records, fields)=>{
-            destinationID = records[0].ID;
-            
-            var query = 'insert into Tour (SourceID, DestinationID) values (?, ?)';
-            connection.query(query, [sourceID, destinationID], (err, records, fields)=>{
-        
-                var querySelectTour = 'select * from Tour where SourceID = ? and DestinationID = ?';
-                console.log(sourceID + " " + destinationID);
-                connection.query(querySelectTour, [sourceID, destinationID], (err, records, fields) => {
-
-                    const queryInsertFlight = 'insert into Flight (TourID, Cost, StartDate, StartTime, TravelTime) values (?, ?, ?, ?, ?) ';
-                    connection.query(queryInsertFlight, [records[0].ID, cost, startDate, startTime, travelTime], (err, results, fields) => {
-                        res.json({
-                            err,
-                            results
-                        });
-                    });
-                });
-            });
+    const queryInsertFlight = 'insert into Flight (TourID, Cost, StartDate, StartTime, TravelTime) values (?, ?, ?, ?, ?) ';
+    connection.query(queryInsertFlight, [tourId, cost, startDate, startTime, travelTime], (err, results, fields) => {
+        res.json({
+            err,
+            results
         });
     });
 };
 
 exports.addTrain = (req, res) => {
-    const source = req.body.source;
-    const destination = req.body.destination;
+    const tourId = req.body.tourId;
     const cost = req.body.cost;
     const startDate = req.body.date;
     const startTime = req.body.startTime;
     const travelTime = req.body.travelTime;
 
-
-    var sourceID, destinationID;
-
-    connection.query('select * from Location where Name = ?', [source], (err, records, fields)=>{
-        sourceID = records[0].ID;
-        connection.query('select * from Location where Name = ?', [destination], (err, records, fields)=>{
-            destinationID = records[0].ID;
-            
-            var query = 'insert into Tour (SourceID, DestinationID) values (?, ?)';
-            connection.query(query, [sourceID, destinationID], (err, records, fields)=>{
-        
-                var querySelectTour = 'select * from Tour where SourceID = ? and DestinationID = ?';
-                console.log(sourceID + " " + destinationID);
-                connection.query(querySelectTour, [sourceID, destinationID], (err, records, fields) => {
-
-                    const queryInsertFlight = 'insert into Train (TourID, Cost, StartDate, StartTime, TravelTime) values (?, ?, ?, ?, ?) ';
-                    connection.query(queryInsertTrain, [records[0].ID, cost, startDate, startTime, travelTime], (err, results, fields) => {
-                        res.json({
-                            err,
-                            results
-                        });
-                    });
-                });
-            });
+    const queryInsertTrain = 'insert into Train (TourID, Cost, StartDate, StartTime, TravelTime) values (?, ?, ?, ?, ?) ';
+    connection.query(queryInsertTrain, [tourId, cost, startDate, startTime, travelTime], (err, results, fields) => {
+        res.json({
+            err,
+            results
         });
     });
 };
 
 exports.addBus = (req, res) => {
-    const source = req.body.source;
-    const destination = req.body.destination;
+    const tourId = req.body.tourId;
     const cost = req.body.cost;
     const startDate = req.body.date;
     const startTime = req.body.startTime;
     const travelTime = req.body.travelTime;
 
-    var sourceID, destinationID;
-
-    connection.query('select * from Location where Name = ?', [source], (err, records, fields)=>{
-        sourceID = records[0].ID;
-        connection.query('select * from Location where Name = ?', [destination], (err, records, fields)=>{
-            destinationID = records[0].ID;
-            
-            var query = 'insert into Tour (SourceID, DestinationID) values (?, ?)';
-            connection.query(query, [sourceID, destinationID], (err, records, fields)=>{
-        
-                var querySelectTour = 'select * from Tour where SourceID = ? and DestinationID = ?';
-                console.log(sourceID + " " + destinationID);
-                connection.query(querySelectTour, [sourceID, destinationID], (err, records, fields) => {
-
-                    const queryInsertBus = 'insert into Bus (TourID, Cost, StartTime, StartDate, TravelTime) values (?, ?, ?, ?, ?) ';
-                    connection.query(queryInsertBus, [records[0].ID, cost, startTime, startDate, travelTime], (err, results, fields) => {
-                        res.json({
-                            err,
-                            results
-                        });
-                    });
-                });
-            });
+    const queryInsertBus = 'insert into Bus (TourID, Cost, StartTime, StartDate, TravelTime) values (?, ?, ?, ?, ?) ';
+    connection.query(queryInsertBus, [tourId, cost, startTime, startDate, travelTime], (err, results, fields) => {
+        res.json({
+            err,
+            results
         });
     });
 };
 
 exports.addHotel = (req, res) => {
     const hotelName = req.body.name;
-    const locationName = req.body.location;
+    const place_id = req.body.place_id;
     const perPersonCost = req.body.cost;
-    const query = 'select * from Location where Name = ?';
-    connection.query(query, [locationName], (err, records, fields)=>{
-        const id = records[0].ID;
-        const insertHotel = 'insert into Hotel (Name, LocationID, PerPersonCost) values (?, ?, ?)';
-        connection.query(insertHotel, [hotelName, id, perPersonCost], (err, records, fields)=>{
-            res.json({err, records, fields});
+    const star = req.body.star;
+    const insertHotel = 'insert into Hotel (Name, PlaceID, PerPersonCost, Star) values (?, ?, ?)';
+    connection.query(insertHotel, [hotelName, place_id, perPersonCost, star], (err, records, fields) => {
+        res.json({
+            err,
+            records,
+            fields
         });
     });
 };
 
-exports.addPackage = (req, res) =>{
-    const tourId = req.body.tourId;
+exports.addHotelPhoto = (req, res) => {
+    const hotelId = req.body.hotelId;
+    const image_url = req.body.image_url;
+    const insertPhoto = 'insert into HotelImage (HotelID, Url) values (?, ?)';
+    connection.query(insertPhoto, [hotelId, image_url], (err, records, fields) => {
+        res.json({
+            err,
+            records,
+            fields
+        });
+    });
+};
+
+exports.addHotelReview = (req, res) => {
+    const hotelID = req.body.hotelId;
+    const review = req.body.review;
+    const rating = req.body.rating;
+    const insertHotelReview = 'insert into HotelReviews (HotelID, Review, Rating) values (?, ?, ?)';
+    connection.query(insertHotelReview, [hotelID, review, rating], (err, records, fields) => {
+        res.json({
+            err,
+            records,
+            fields
+        });
+    });
+};
+
+exports.getHotel = (req, res) => {
+    const cityId = req.body.city_id;
+    const query = "select HotelID, Name, PerPersonCost, Start," +
+     "Place.Name as PlaceName, City.Name as CityName, Country.Name as CountryName from Hotel"+
+     "inner join Place on Place.CityID = City.ID"+
+     "inner join Country on City.CountryID = Country.ID"+
+     "where CityID = ?";
+    
+    connection.query(query, [cityId], (err, results, fields)=>{
+        if(err){
+            res.json({
+                code: 400,
+                message: 'could not get the hotel details'
+            });
+        }
+        res.json({
+            records
+        });
+    });
+};
+
+
+exports.addPackage = (req, res) => {
     const numDays = req.body.numDays;
     const numNights = req.body.numNights;
     const hotelId = req.body.hotelId;
+    const packageTag = req.body.packageTag;
+    const description = req.body.description;
     const otherCost = req.body.otherCost;
     const discount = req.body.discount;
-    const query = 'insert into TravelPackage(tourId, numDays, numNights, hotelId, otherCost, discount) values (?, ?, ?, ?, ?, ?)';
-    connection.query(query, [tourId, numDays, numNights, hotelId, otherCost, discount], (err, results, fields)=>{
+    const query = 'insert into TravelPackage(PackageTag, Description, NumDays, NumNights, HotelId, OtherCost, Discount) values (?, ?, ?, ?, ?, ?, ?)';
+    connection.query(query, [packageTag, description, numDays, numNights, hotelId, otherCost, discount], (err, results, fields) => {
         res.json({
-            err, 
+            err,
             results
         });
     });
-}
+};
